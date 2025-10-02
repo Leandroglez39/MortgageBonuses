@@ -1,23 +1,88 @@
-[project]
+[tool.poetry]
 name = "mortgage-bonuses"
 version = "0.1.0"
 description = "Calculadora de bonificaciones de hipotecas"
-authors = [
-    {name = "Leandro González",email = "leandro@example.com"}
-]
+authors = ["Leandro González <leandro@example.com>"]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    "openpyxl (>=3.1.5,<4.0.0)",
-    "pandas (>=2.3.3,<3.0.0)",
-    "numpy (>=2.3.3,<3.0.0)"
+license = "MIT"
+homepage = "https://github.com/Leandroglez39/MortgageBonuses"
+repository = "https://github.com/Leandroglez39/MortgageBonuses"
+documentation = "https://github.com/Leandroglez39/MortgageBonuses/blob/main/README.md"
+keywords = ["mortgage", "calculator", "finance", "excel", "bonuses"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Office/Business :: Financial",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
+packages = [{include = "mortgage_calculator"}]
 
+[tool.poetry.dependencies]
+python = "^3.12"
+openpyxl = "^3.1.5"
+pandas = "^2.3.3"
+numpy = "^2.3.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-cov = "^6.0.0"
+black = "^25.1.0"
+ruff = "^0.9.1"
+
+[tool.poetry.scripts]
+mortgage-calculator = "main:main"
+mortgage-interactive = "interactive:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.2"
+[tool.black]
+line-length = 100
+target-version = ['py312']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | __pycache__
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers --cov=mortgage_calculator --cov-report=html --cov-report=term"
+
+[tool.coverage.run]
+source = ["mortgage_calculator"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
 
