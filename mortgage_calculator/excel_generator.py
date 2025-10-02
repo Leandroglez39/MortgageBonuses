@@ -43,6 +43,7 @@ class ExcelGenerator:
             self._create_amortization_sheet(writer, with_bonus=False)
             self._create_amortization_sheet(writer, with_bonus=True)
             self._create_bonus_analysis_sheet(writer)
+            self._create_insurance_individual_analysis_sheet(writer)
 
         # Aplicar formato
         self._apply_formatting(output_path)
@@ -308,6 +309,212 @@ class ExcelGenerator:
 
         df = pd.DataFrame(data)
         df.to_excel(writer, sheet_name="Análisis Bonificaciones", index=False)
+
+    def _create_insurance_individual_analysis_sheet(self, writer: pd.ExcelWriter):
+        """Crea una hoja con análisis individual de cada seguro."""
+        if not self.results:
+            return
+
+        # Análisis seguro de vida
+        life_analysis = self._analyze_individual_insurance(
+            bonus_rate=self.data.life_insurance_bonus,
+            monthly_cost=self.data.life_insurance_cost_monthly,
+            insurance_name="Seguro de Vida",
+        )
+
+        # Análisis seguro de hogar
+        home_analysis = self._analyze_individual_insurance(
+            bonus_rate=self.data.home_insurance_bonus,
+            monthly_cost=self.data.home_insurance_cost_monthly,
+            insurance_name="Seguro de Hogar",
+        )
+
+        # Calcular punto de equilibrio para cada seguro
+        life_breakeven = self._calculate_insurance_breakeven(self.data.life_insurance_bonus)
+        home_breakeven = self._calculate_insurance_breakeven(self.data.home_insurance_bonus)
+
+        data = {
+            "Concepto": [
+                "▼ SEGURO DE VIDA",
+                "Bonificación aplicada (%)",
+                "Coste mensual actual (€)",
+                "Coste total durante hipoteca (€)",
+                "Ahorro en intereses (€)",
+                "Ahorro neto (€)",
+                "¿Vale la pena?",
+                "",
+                "Análisis de rentabilidad:",
+                "Coste mensual máximo rentable (€)",
+                "Coste anual máximo rentable (€)",
+                "Coste total máximo rentable (€)",
+                "",
+                "▼ SEGURO DE HOGAR",
+                "Bonificación aplicada (%)",
+                "Coste mensual actual (€)",
+                "Coste total durante hipoteca (€)",
+                "Ahorro en intereses (€)",
+                "Ahorro neto (€)",
+                "¿Vale la pena?",
+                "",
+                "Análisis de rentabilidad:",
+                "Coste mensual máximo rentable (€)",
+                "Coste anual máximo rentable (€)",
+                "Coste total máximo rentable (€)",
+                "",
+                "▼ COMPARACIÓN",
+                "Mejor seguro por rentabilidad",
+                "Diferencia de ahorro (€)",
+                "",
+                "▼ RECOMENDACIONES",
+                "Seguro de vida",
+                "Seguro de hogar",
+            ],
+            "Valor": [
+                "",
+                f"{self.data.life_insurance_bonus}%",
+                self.data.life_insurance_cost_monthly,
+                life_analysis["total_cost"],
+                life_analysis["interest_savings"],
+                life_analysis["net_savings"],
+                "SÍ ✓" if life_analysis["is_worth_it"] else "NO ✗",
+                "",
+                "",
+                life_breakeven["max_monthly_cost"],
+                life_breakeven["max_annual_cost"],
+                life_breakeven["max_total_cost"],
+                "",
+                "",
+                f"{self.data.home_insurance_bonus}%",
+                self.data.home_insurance_cost_monthly,
+                home_analysis["total_cost"],
+                home_analysis["interest_savings"],
+                home_analysis["net_savings"],
+                "SÍ ✓" if home_analysis["is_worth_it"] else "NO ✗",
+                "",
+                "",
+                home_breakeven["max_monthly_cost"],
+                home_breakeven["max_annual_cost"],
+                home_breakeven["max_total_cost"],
+                "",
+                "",
+                self._get_best_insurance(life_analysis, home_analysis),
+                abs(life_analysis["net_savings"] - home_analysis["net_savings"]),
+                "",
+                "",
+                self._get_insurance_recommendation(
+                    life_analysis, self.data.life_insurance_cost_monthly, life_breakeven
+                ),
+                self._get_insurance_recommendation(
+                    home_analysis, self.data.home_insurance_cost_monthly, home_breakeven
+                ),
+            ],
+        }
+
+        df = pd.DataFrame(data)
+        df.to_excel(writer, sheet_name="Análisis Individual Seguros", index=False)
+
+    def _analyze_individual_insurance(
+        self, bonus_rate: float, monthly_cost: float, insurance_name: str
+    ) -> dict:
+        """Analiza la rentabilidad de un seguro individual."""
+        # Crear datos temporales solo con este seguro
+        temp_data = MortgageData(
+            capital=self.data.capital,
+            interest_rate=self.data.interest_rate,
+            years=self.data.years,
+            payroll_bonus=0.0,
+            life_insurance_bonus=bonus_rate if "Vida" in insurance_name else 0.0,
+            home_insurance_bonus=bonus_rate if "Hogar" in insurance_name else 0.0,
+            card_bonus=0.0,
+            other_bonus=0.0,
+            life_insurance_cost_monthly=monthly_cost if "Vida" in insurance_name else 0.0,
+            home_insurance_cost_monthly=monthly_cost if "Hogar" in insurance_name else 0.0,
+            card_annual_fee=0.0,
+            other_costs_monthly=0.0,
+        )
+
+        calculator = MortgageCalculator(temp_data)
+        results = calculator.calculate()
+
+        months = self.data.years * 12
+        total_cost = monthly_cost * months
+        interest_savings = results.total_interest_without_bonus - results.total_interest_with_bonus
+        net_savings = interest_savings - total_cost
+
+        return {
+            "total_cost": total_cost,
+            "interest_savings": interest_savings,
+            "net_savings": net_savings,
+            "is_worth_it": net_savings > 0,
+            "monthly_cost": monthly_cost,
+        }
+
+    def _calculate_insurance_breakeven(self, bonus_rate: float) -> dict:
+        """Calcula el coste máximo para que un seguro valga la pena."""
+        if bonus_rate == 0:
+            return {"max_monthly_cost": 0.0, "max_annual_cost": 0.0, "max_total_cost": 0.0}
+
+        # Calcular ahorro en intereses con esta bonificación
+        temp_data = MortgageData(
+            capital=self.data.capital,
+            interest_rate=self.data.interest_rate,
+            years=self.data.years,
+            payroll_bonus=0.0,
+            life_insurance_bonus=bonus_rate,
+            home_insurance_bonus=0.0,
+            card_bonus=0.0,
+            other_bonus=0.0,
+            life_insurance_cost_monthly=0.0,
+            home_insurance_cost_monthly=0.0,
+            card_annual_fee=0.0,
+            other_costs_monthly=0.0,
+        )
+
+        calculator = MortgageCalculator(temp_data)
+        results = calculator.calculate()
+
+        interest_savings = results.total_interest_without_bonus - results.total_interest_with_bonus
+        months = self.data.years * 12
+
+        max_total_cost = interest_savings
+        max_monthly_cost = max_total_cost / months
+        max_annual_cost = max_monthly_cost * 12
+
+        return {
+            "max_monthly_cost": round(max_monthly_cost, 2),
+            "max_annual_cost": round(max_annual_cost, 2),
+            "max_total_cost": round(max_total_cost, 2),
+        }
+
+    def _get_best_insurance(self, life_analysis: dict, home_analysis: dict) -> str:
+        """Determina cuál seguro es más rentable."""
+        if life_analysis["net_savings"] > home_analysis["net_savings"]:
+            if life_analysis["is_worth_it"]:
+                return "Seguro de Vida (más rentable)"
+            else:
+                return "Ninguno es rentable"
+        elif home_analysis["net_savings"] > life_analysis["net_savings"]:
+            if home_analysis["is_worth_it"]:
+                return "Seguro de Hogar (más rentable)"
+            else:
+                return "Ninguno es rentable"
+        else:
+            if life_analysis["is_worth_it"]:
+                return "Ambos igual de rentables"
+            else:
+                return "Ninguno es rentable"
+
+    def _get_insurance_recommendation(
+        self, analysis: dict, current_cost: float, breakeven: dict
+    ) -> str:
+        """Genera una recomendación para el seguro."""
+        if analysis["is_worth_it"]:
+            margin = breakeven["max_monthly_cost"] - current_cost
+            margin_pct = (margin / breakeven["max_monthly_cost"]) * 100
+            return f"✓ Contratar (margen: {margin:.2f}€/mes = {margin_pct:.1f}%)"
+        else:
+            excess = current_cost - breakeven["max_monthly_cost"]
+            return f"✗ No contratar (excede punto equilibrio en {excess:.2f}€/mes)"
 
     def _apply_formatting(self, file_path: str):
         """Aplica formato visual al archivo Excel."""

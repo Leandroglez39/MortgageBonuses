@@ -27,8 +27,8 @@ def main():
         card_bonus=0.00,  # 0.10% por usar tarjeta
         other_bonus=0.00,  # 0.10% otras bonificaciones
         # Costes asociados a las bonificaciones
-        life_insurance_cost_monthly=288.0/12,  # X/12€/mes seguro de vida
-        home_insurance_cost_monthly=400.0/12,  # X/12€/mes seguro de hogar
+        life_insurance_cost_monthly=288.0 / 12,  # X/12€/mes seguro de vida
+        home_insurance_cost_monthly=400.0 / 12,  # X/12€/mes seguro de hogar
         card_annual_fee=0.0,  # 0€/año la tarjeta
         other_costs_monthly=0.0,  # 0€/mes otros costes
     )
