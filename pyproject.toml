@@ -1,0 +1,23 @@
+[project]
+name = "mortgage-bonuses"
+version = "0.1.0"
+description = "Calculadora de bonificaciones de hipotecas"
+authors = [
+    {name = "Leandro González",email = "leandro@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "numpy (>=2.3.3,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+
