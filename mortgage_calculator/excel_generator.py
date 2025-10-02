@@ -45,8 +45,9 @@ class ExcelGenerator:
             self._create_bonus_analysis_sheet(writer)
             self._create_insurance_individual_analysis_sheet(writer)
 
-        # Aplicar formato
+        # Aplicar formato y fórmulas
         self._apply_formatting(output_path)
+        self._add_formulas_to_sheets(output_path)
 
         return str(Path(output_path).absolute())
 
@@ -75,15 +76,15 @@ class ExcelGenerator:
             "Valor": [
                 "",
                 self.data.capital,
-                f"{self.data.interest_rate}%",
+                self.data.interest_rate,
                 self.data.years,
                 "",
                 "",
-                f"{self.data.payroll_bonus}%",
-                f"{self.data.life_insurance_bonus}%",
-                f"{self.data.home_insurance_bonus}%",
-                f"{self.data.card_bonus}%",
-                f"{self.data.other_bonus}%",
+                self.data.payroll_bonus,
+                self.data.life_insurance_bonus,
+                self.data.home_insurance_bonus,
+                self.data.card_bonus,
+                self.data.other_bonus,
                 "",
                 "",
                 self.data.life_insurance_cost_monthly,
@@ -97,68 +98,28 @@ class ExcelGenerator:
         df.to_excel(writer, sheet_name="Datos de Entrada", index=False)
 
     def _create_summary_sheet(self, writer: pd.ExcelWriter):
-        """Crea la hoja resumen con los resultados principales."""
-        if not self.results:
-            return
-
+        """Crea la hoja resumen con fórmulas dinámicas."""
+        # Esta hoja se llenará completamente con fórmulas en _add_formulas_to_sheets
         data = {
             "Concepto": [
-                "▼ RESUMEN EJECUTIVO",
-                "",
-                "¿Vale la pena la bonificación?",
-                "Ahorro real (€)",
-                "Porcentaje de ahorro (%)",
-                "",
-                "▼ SIN BONIFICACIONES",
-                "Cuota mensual (€)",
-                "Intereses totales (€)",
-                "Total a pagar (€)",
-                "Tasa efectiva (%)",
-                "",
-                "▼ CON BONIFICACIONES",
-                "Cuota mensual (€)",
-                "Intereses totales (€)",
-                "Total a pagar (€)",
-                "Coste total bonificaciones (€)",
-                "Coste real total (€)",
-                "Tasa efectiva (%)",
-                "",
-                "▼ DIFERENCIAS",
-                "Ahorro en cuota mensual (€)",
+                "▼ CÁLCULOS AUTOMÁTICOS",
+                "Meses totales",
+                "Bonificación total (%)",
+                "Tipo efectivo sin bonif. (%)",
+                "Tipo efectivo con bonif. (%)",
+                "Cuota mensual SIN bonificaciones (€)",
+                "Cuota mensual CON bonificaciones (€)",
+                "Total a pagar SIN bonificaciones (€)",
+                "Total a pagar CON bonificaciones (€)",
+                "Intereses SIN bonificaciones (€)",
+                "Intereses CON bonificaciones (€)",
+                "Costes bonificaciones (€)",
                 "Ahorro en intereses (€)",
-                "Ahorro nominal (€)",
-                "Menos: Coste bonificaciones (€)",
                 "Ahorro real (€)",
+                "¿Vale la pena?",
+                "Porcentaje de ahorro (%)",
             ],
-            "Valor": [
-                "",
-                "",
-                "SÍ ✓" if self.results.is_worth_it else "NO ✗",
-                self.results.real_savings,
-                f"{self.results.savings_percentage}%",
-                "",
-                "",
-                self.results.monthly_payment_without_bonus,
-                self.results.total_interest_without_bonus,
-                self.results.total_paid_without_bonus,
-                f"{self.results.effective_rate_without_bonus}%",
-                "",
-                "",
-                self.results.monthly_payment_with_bonus,
-                self.results.total_interest_with_bonus,
-                self.results.total_paid_with_bonus,
-                self.results.total_bonus_costs,
-                self.results.total_paid_with_bonus + self.results.total_bonus_costs,
-                f"{self.results.effective_rate_with_bonus}%",
-                "",
-                "",
-                self.results.monthly_payment_without_bonus
-                - self.results.monthly_payment_with_bonus,
-                self.results.total_interest_without_bonus - self.results.total_interest_with_bonus,
-                self.results.total_paid_without_bonus - self.results.total_paid_with_bonus,
-                self.results.total_bonus_costs,
-                self.results.real_savings,
-            ],
+            "Fórmula/Valor": [""] * 16,  # Se llenarán con fórmulas
         }
 
         df = pd.DataFrame(data)
@@ -575,5 +536,156 @@ class ExcelGenerator:
                     else:
                         row[1].fill = warning_fill
                         row[1].font = Font(bold=True, size=12)
+
+        wb.save(file_path)
+
+    def _add_formulas_to_sheets(self, file_path: str):
+        """Añade fórmulas dinámicas a las hojas para que se actualicen automáticamente."""
+        wb = load_workbook(file_path)
+
+        # Formatear porcentajes en la hoja de entrada
+        if "Datos de Entrada" in wb.sheetnames:
+            ws = wb["Datos de Entrada"]
+            # B3 = Interés, B7-B11 = Bonificaciones (dividir por 100 para formato %)
+            percentage_cells = ["B3", "B7", "B8", "B9", "B10", "B11"]
+            for cell_addr in percentage_cells:
+                cell = ws[cell_addr]
+                if cell.value is not None and isinstance(cell.value, (int, float)):
+                    cell.value = cell.value / 100  # Convertir a decimal
+                    cell.number_format = "0.00%"
+
+        # Referencias a celdas de entrada (hoja "Datos de Entrada")
+        # B2 = Capital, B3 = Interés, B4 = Plazo
+        # B7-B11 = Bonificaciones, B14-B17 = Costes
+
+        # Hoja de Resumen
+        if "Resumen" in wb.sheetnames:
+            ws = wb["Resumen"]
+
+            # Referencias a datos de entrada
+            input_sheet = "'Datos de Entrada'"
+
+            # Estructura de la hoja Resumen:
+            # A1="Concepto", B1="Fórmula/Valor"
+            # A2="▼ CÁLCULOS AUTOMÁTICOS", B2=vacío
+            # A3="Meses totales", B3=fórmula
+            # A4="Bonificación total (%)", B4=fórmula
+            # etc.
+
+            # Calcular meses totales (fila 3)
+            ws["B3"] = f"={input_sheet}!B5*12"  # Meses = Años * 12
+            ws["B3"].number_format = "0"
+
+            # Total bonificaciones (fila 4)
+            ws["B4"] = (
+                f"={input_sheet}!B7+{input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11"
+            )
+            ws["B4"].number_format = "0.00%"
+
+            # Tipo efectivo sin bonificaciones (fila 5)
+            ws["B5"] = f"={input_sheet}!B3"
+            ws["B5"].number_format = "0.00%"
+
+            # Tipo efectivo con bonificaciones (fila 6)
+            ws["B6"] = "=MAX(0, B5-B4)"
+            ws["B6"].number_format = "0.00%"
+
+            # Cuota mensual SIN bonificaciones (fila 7)
+            ws["B7"] = (
+                f"=IF(B5=0, {input_sheet}!B2/B3, {input_sheet}!B2*(B5/12)*(1+B5/12)^B3/((1+B5/12)^B3-1))"
+            )
+            ws["B7"].number_format = "#,##0.00"
+
+            # Cuota mensual CON bonificaciones (fila 8)
+            ws["B8"] = (
+                f"=IF(B6=0, {input_sheet}!B2/B3, {input_sheet}!B2*(B6/12)*(1+B6/12)^B3/((1+B6/12)^B3-1))"
+            )
+            ws["B8"].number_format = "#,##0.00"
+
+            # Total a pagar sin bonificaciones (fila 9)
+            ws["B9"] = "=B7*B3"
+            ws["B9"].number_format = "#,##0.00"
+
+            # Total a pagar con bonificaciones (fila 10)
+            ws["B10"] = "=B8*B3"
+            ws["B10"].number_format = "#,##0.00"
+
+            # Intereses sin bonificaciones (fila 11)
+            ws["B11"] = f"=B9-{input_sheet}!B2"
+            ws["B11"].number_format = "#,##0.00"
+
+            # Intereses con bonificaciones (fila 12)
+            ws["B12"] = f"=B10-{input_sheet}!B2"
+            ws["B12"].number_format = "#,##0.00"
+
+            # Costes de bonificaciones (fila 13)
+            ws["B13"] = (
+                f"=({input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B17)*B3+{input_sheet}!B16*{input_sheet}!B4"
+            )
+            ws["B13"].number_format = "#,##0.00"
+
+            # Ahorro nominal (fila 14)
+            ws["B14"] = "=B11-B12"
+            ws["B14"].number_format = "#,##0.00"
+
+            # Ahorro real (fila 15)
+            ws["B15"] = "=B14-B13"
+            ws["B15"].number_format = "#,##0.00"
+
+            # ¿Vale la pena? (fila 16)
+            ws["B16"] = '=IF(B15>0,"SÍ ✓","NO ✗")'
+
+            # Porcentaje de ahorro (fila 17)
+            ws["B17"] = "=IF(B9=0,0,(B15/B9)*100)"
+            ws["B17"].number_format = "0.00"
+
+        # Hoja de Análisis de Bonificaciones
+        if "Análisis Bonificaciones" in wb.sheetnames:
+            ws = wb["Análisis Bonificaciones"]
+            input_sheet = "'Datos de Entrada'"
+
+            # Total bonificaciones
+            ws["B7"] = (
+                f"={input_sheet}!B7+{input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11"
+            )
+
+            # Coste mensual total
+            ws["C7"] = (
+                f"={input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B16/12+{input_sheet}!B17"
+            )
+            ws["C7"].number_format = "#,##0.00"
+
+            # Coste total
+            ws["D7"] = (
+                f"=({input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B17)*{input_sheet}!B4*12+{input_sheet}!B16*{input_sheet}!B4"
+            )
+            ws["D7"].number_format = "#,##0.00"
+
+            # Ahorro en intereses (referencia a la hoja Resumen, B14 = ahorro nominal)
+            ws["E7"] = "=Resumen!B14"
+            ws["E7"].number_format = "#,##0.00"
+
+        # Hoja de Análisis Individual Seguros
+        if "Análisis Individual Seguros" in wb.sheetnames:
+            ws = wb["Análisis Individual Seguros"]
+            input_sheet = "'Datos de Entrada'"
+
+            # Seguro de Vida
+            # Bonificación
+            ws["B2"] = f"={input_sheet}!B8"
+            # Coste mensual
+            ws["B3"] = f"={input_sheet}!B14"
+            # Coste total
+            ws["B4"] = f"={input_sheet}!B14*{input_sheet}!B4*12"
+            ws["B4"].number_format = "#,##0.00"
+
+            # Seguro de Hogar
+            # Bonificación
+            ws["B15"] = f"={input_sheet}!B9"
+            # Coste mensual
+            ws["B16"] = f"={input_sheet}!B15"
+            # Coste total
+            ws["B17"] = f"={input_sheet}!B15*{input_sheet}!B4*12"
+            ws["B17"].number_format = "#,##0.00"
 
         wb.save(file_path)
