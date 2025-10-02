@@ -566,76 +566,102 @@ class ExcelGenerator:
             input_sheet = "'Datos de Entrada'"
 
             # Estructura de la hoja Resumen:
-            # A1="Concepto", B1="Fórmula/Valor"
+            # A1="Concepto", B1="Fórmula/Valor" (ENCABEZADO)
             # A2="▼ CÁLCULOS AUTOMÁTICOS", B2=vacío
-            # A3="Meses totales", B3=fórmula
-            # A4="Bonificación total (%)", B4=fórmula
-            # etc.
+            # A3="Meses totales", B3=fórmula -> debe leer de 'Datos de Entrada'!B5 (Plazo)
+            # A4="Bonificación total (%)", B4=fórmula -> debe sumar B8:B12 de Datos de Entrada
+            # A5="Tipo efectivo sin bonif. (%)", B5=fórmula -> debe leer B4 de Datos de Entrada
+            # A6="Tipo efectivo con bonif. (%)", B6=fórmula -> B5-B4 (tipo - bonificaciones)
+            # A7="Cuota mensual SIN bonificaciones (€)", B7=fórmula -> usa B5 (tipo sin bonif)
+            # A8="Cuota mensual CON bonificaciones (€)", B8=fórmula -> usa B6 (tipo con bonif)
+            # A9="Total a pagar SIN bonificaciones (€)", B9=fórmula
+            # A10="Total a pagar CON bonificaciones (€)", B10=fórmula
+            # A11="Intereses SIN bonificaciones (€)", B11=fórmula
+            # A12="Intereses CON bonificaciones (€)", B12=fórmula
+            # A13="Costes bonificaciones (€)", B13=fórmula
+            # A14="Ahorro en intereses (€)", B14=fórmula
+            # A15="Ahorro real (€)", B15=fórmula
+            # A16="¿Vale la pena?", B16=fórmula
+            # A17="Porcentaje de ahorro (%)", B17=fórmula
 
-            # Calcular meses totales (fila 3)
-            ws["B3"] = f"={input_sheet}!B5*12"  # Meses = Años * 12
+            # DATOS DE ENTRADA - Referencias:
+            # B3 = Capital (fila 3)
+            # B4 = Interés (fila 4)
+            # B5 = Plazo años (fila 5)
+            # B8 = Bonif nómina (fila 8)
+            # B9 = Bonif vida (fila 9)
+            # B10 = Bonif hogar (fila 10)
+            # B11 = Bonif tarjeta (fila 11)
+            # B12 = Otras bonif (fila 12)
+            # B15 = Coste vida (fila 15)
+            # B16 = Coste hogar (fila 16)
+            # B17 = Coste tarjeta anual (fila 17)
+            # B18 = Otros costes (fila 18)
+
+            # Calcular meses totales (fila 3) -> Plazo * 12
+            ws["B3"] = f"={input_sheet}!B5*12"
             ws["B3"].number_format = "0"
 
-            # Total bonificaciones (fila 4)
+            # Total bonificaciones (fila 4) -> Suma B8+B9+B10+B11+B12
             ws["B4"] = (
-                f"={input_sheet}!B7+{input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11"
+                f"={input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11+{input_sheet}!B12"
             )
             ws["B4"].number_format = "0.00%"
 
-            # Tipo efectivo sin bonificaciones (fila 5)
-            ws["B5"] = f"={input_sheet}!B3"
+            # Tipo efectivo sin bonificaciones (fila 5) -> Interés de B4
+            ws["B5"] = f"={input_sheet}!B4"
             ws["B5"].number_format = "0.00%"
 
-            # Tipo efectivo con bonificaciones (fila 6)
+            # Tipo efectivo con bonificaciones (fila 6) -> B5 - B4 (tipo - bonificaciones)
             ws["B6"] = "=MAX(0, B5-B4)"
             ws["B6"].number_format = "0.00%"
 
-            # Cuota mensual SIN bonificaciones (fila 7)
+            # Cuota mensual SIN bonificaciones (fila 7) -> Capital en B3, usa tipo B5, meses B3
             ws["B7"] = (
-                f"=IF(B5=0, {input_sheet}!B2/B3, {input_sheet}!B2*(B5/12)*(1+B5/12)^B3/((1+B5/12)^B3-1))"
+                f"=IF(B5=0, {input_sheet}!B3/B3, {input_sheet}!B3*(B5/12)*(1+B5/12)^B3/((1+B5/12)^B3-1))"
             )
             ws["B7"].number_format = "#,##0.00"
 
-            # Cuota mensual CON bonificaciones (fila 8)
+            # Cuota mensual CON bonificaciones (fila 8) -> Capital en B3, usa tipo B6, meses B3
             ws["B8"] = (
-                f"=IF(B6=0, {input_sheet}!B2/B3, {input_sheet}!B2*(B6/12)*(1+B6/12)^B3/((1+B6/12)^B3-1))"
+                f"=IF(B6=0, {input_sheet}!B3/B3, {input_sheet}!B3*(B6/12)*(1+B6/12)^B3/((1+B6/12)^B3-1))"
             )
             ws["B8"].number_format = "#,##0.00"
 
-            # Total a pagar sin bonificaciones (fila 9)
+            # Total a pagar sin bonificaciones (fila 9) -> B7 * B3
             ws["B9"] = "=B7*B3"
             ws["B9"].number_format = "#,##0.00"
 
-            # Total a pagar con bonificaciones (fila 10)
+            # Total a pagar con bonificaciones (fila 10) -> B8 * B3
             ws["B10"] = "=B8*B3"
             ws["B10"].number_format = "#,##0.00"
 
-            # Intereses sin bonificaciones (fila 11)
-            ws["B11"] = f"=B9-{input_sheet}!B2"
+            # Intereses sin bonificaciones (fila 11) -> B9 - Capital (B3 de Datos)
+            ws["B11"] = f"=B9-{input_sheet}!B3"
             ws["B11"].number_format = "#,##0.00"
 
-            # Intereses con bonificaciones (fila 12)
-            ws["B12"] = f"=B10-{input_sheet}!B2"
+            # Intereses con bonificaciones (fila 12) -> B10 - Capital (B3 de Datos)
+            ws["B12"] = f"=B10-{input_sheet}!B3"
             ws["B12"].number_format = "#,##0.00"
 
-            # Costes de bonificaciones (fila 13)
+            # Costes de bonificaciones (fila 13) -> (B15+B16+B18)*meses + B17*años
             ws["B13"] = (
-                f"=({input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B17)*B3+{input_sheet}!B16*{input_sheet}!B4"
+                f"=({input_sheet}!B15+{input_sheet}!B16+{input_sheet}!B18)*B3+{input_sheet}!B17*{input_sheet}!B5"
             )
             ws["B13"].number_format = "#,##0.00"
 
-            # Ahorro nominal (fila 14)
+            # Ahorro nominal (fila 14) -> B11 - B12
             ws["B14"] = "=B11-B12"
             ws["B14"].number_format = "#,##0.00"
 
-            # Ahorro real (fila 15)
+            # Ahorro real (fila 15) -> B14 - B13
             ws["B15"] = "=B14-B13"
             ws["B15"].number_format = "#,##0.00"
 
-            # ¿Vale la pena? (fila 16)
+            # ¿Vale la pena? (fila 16) -> Si B15 > 0
             ws["B16"] = '=IF(B15>0,"SÍ ✓","NO ✗")'
 
-            # Porcentaje de ahorro (fila 17)
+            # Porcentaje de ahorro (fila 17) -> (B15 / B9) * 100
             ws["B17"] = "=IF(B9=0,0,(B15/B9)*100)"
             ws["B17"].number_format = "0.00"
 
@@ -644,20 +670,20 @@ class ExcelGenerator:
             ws = wb["Análisis Bonificaciones"]
             input_sheet = "'Datos de Entrada'"
 
-            # Total bonificaciones
+            # Total bonificaciones -> B8+B9+B10+B11+B12
             ws["B7"] = (
-                f"={input_sheet}!B7+{input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11"
+                f"={input_sheet}!B8+{input_sheet}!B9+{input_sheet}!B10+{input_sheet}!B11+{input_sheet}!B12"
             )
 
-            # Coste mensual total
+            # Coste mensual total -> B15 (vida) + B16 (hogar) + B17/12 (tarjeta) + B18 (otros)
             ws["C7"] = (
-                f"={input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B16/12+{input_sheet}!B17"
+                f"={input_sheet}!B15+{input_sheet}!B16+{input_sheet}!B17/12+{input_sheet}!B18"
             )
             ws["C7"].number_format = "#,##0.00"
 
-            # Coste total
+            # Coste total -> (B15+B16+B18)*Plazo*12 + B17*Plazo
             ws["D7"] = (
-                f"=({input_sheet}!B14+{input_sheet}!B15+{input_sheet}!B17)*{input_sheet}!B4*12+{input_sheet}!B16*{input_sheet}!B4"
+                f"=({input_sheet}!B15+{input_sheet}!B16+{input_sheet}!B18)*{input_sheet}!B5*12+{input_sheet}!B17*{input_sheet}!B5"
             )
             ws["D7"].number_format = "#,##0.00"
 
@@ -671,21 +697,21 @@ class ExcelGenerator:
             input_sheet = "'Datos de Entrada'"
 
             # Seguro de Vida
-            # Bonificación
-            ws["B2"] = f"={input_sheet}!B8"
-            # Coste mensual
-            ws["B3"] = f"={input_sheet}!B14"
-            # Coste total
-            ws["B4"] = f"={input_sheet}!B14*{input_sheet}!B4*12"
+            # Bonificación -> B9 (fila 9)
+            ws["B2"] = f"={input_sheet}!B9"
+            # Coste mensual -> B15 (fila 15)
+            ws["B3"] = f"={input_sheet}!B15"
+            # Coste total -> B15 * B5 (Plazo) * 12
+            ws["B4"] = f"={input_sheet}!B15*{input_sheet}!B5*12"
             ws["B4"].number_format = "#,##0.00"
 
             # Seguro de Hogar
-            # Bonificación
-            ws["B15"] = f"={input_sheet}!B9"
-            # Coste mensual
-            ws["B16"] = f"={input_sheet}!B15"
-            # Coste total
-            ws["B17"] = f"={input_sheet}!B15*{input_sheet}!B4*12"
+            # Bonificación -> B10 (fila 10)
+            ws["B15"] = f"={input_sheet}!B10"
+            # Coste mensual -> B16 (fila 16)
+            ws["B16"] = f"={input_sheet}!B16"
+            # Coste total -> B16 * B5 (Plazo) * 12
+            ws["B17"] = f"={input_sheet}!B16*{input_sheet}!B5*12"
             ws["B17"].number_format = "#,##0.00"
 
         wb.save(file_path)
