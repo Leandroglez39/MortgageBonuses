@@ -15,14 +15,16 @@ class MortgageData:
 
     # Bonificaciones
     payroll_bonus: float = 0.0  # Bonificación por domiciliar nómina (%)
-    insurance_bonus: float = 0.0  # Bonificación por contratar seguros (%)
+    life_insurance_bonus: float = 0.0  # Bonificación por seguro de vida (%)
+    home_insurance_bonus: float = 0.0  # Bonificación por seguro de hogar (%)
     card_bonus: float = 0.0  # Bonificación por usar tarjeta (%)
     other_bonus: float = 0.0  # Otras bonificaciones (%)
 
     # Costes asociados a bonificaciones
-    insurance_cost_monthly: float = 0.0  # Coste mensual del seguro
-    card_annual_fee: float = 0.0  # Cuota anual de la tarjeta
-    other_costs_monthly: float = 0.0  # Otros costes mensuales
+    life_insurance_cost_monthly: float = 0.0  # Coste mensual del seguro de vida (€)
+    home_insurance_cost_monthly: float = 0.0  # Coste mensual del seguro de hogar (€)
+    card_annual_fee: float = 0.0  # Cuota anual de la tarjeta (€)
+    other_costs_monthly: float = 0.0  # Otros costes mensuales (€)
 
 
 @dataclass

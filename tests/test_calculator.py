@@ -14,7 +14,8 @@ def test_mortgage_data_creation():
     assert data.interest_rate == 3.0
     assert data.years == 20
     assert data.payroll_bonus == 0.0
-    assert data.insurance_bonus == 0.0
+    assert data.life_insurance_bonus == 0.0
+    assert data.home_insurance_bonus == 0.0
 
 
 def test_calculate_monthly_payment_without_interest():
@@ -46,7 +47,8 @@ def test_total_bonus_calculation():
         interest_rate=3.5,
         years=20,
         payroll_bonus=0.25,
-        insurance_bonus=0.40,
+        life_insurance_bonus=0.25,
+        home_insurance_bonus=0.15,
         card_bonus=0.15,
         other_bonus=0.10,
     )
@@ -63,7 +65,8 @@ def test_total_bonus_costs():
         capital=100000.0,
         interest_rate=3.0,
         years=10,
-        insurance_cost_monthly=50.0,
+        life_insurance_cost_monthly=30.0,
+        home_insurance_cost_monthly=20.0,
         card_annual_fee=60.0,
         other_costs_monthly=20.0,
     )
@@ -71,7 +74,7 @@ def test_total_bonus_costs():
     calculator = MortgageCalculator(data)
     total_costs = calculator.calculate_total_bonus_costs()
 
-    # (50 + 20) * 120 meses + 60 * 10 años = 8400 + 600 = 9000
+    # (30 + 20 + 20) * 120 meses + 60 * 10 años = 8400 + 600 = 9000
     assert total_costs == 9000.0
 
 
@@ -97,8 +100,10 @@ def test_calculate_results_with_bonus():
         interest_rate=3.5,
         years=30,
         payroll_bonus=0.30,
-        insurance_bonus=0.50,
-        insurance_cost_monthly=40.0,
+        life_insurance_bonus=0.30,
+        home_insurance_bonus=0.20,
+        life_insurance_cost_monthly=20.0,
+        home_insurance_cost_monthly=20.0,
     )
 
     calculator = MortgageCalculator(data)
@@ -147,8 +152,10 @@ def test_bonus_worth_it_positive():
         interest_rate=4.0,
         years=30,
         payroll_bonus=0.50,
-        insurance_bonus=0.70,
-        insurance_cost_monthly=30.0,  # Coste bajo
+        life_insurance_bonus=0.40,
+        home_insurance_bonus=0.30,
+        life_insurance_cost_monthly=15.0,  # Coste bajo
+        home_insurance_cost_monthly=15.0,
     )
 
     calculator = MortgageCalculator(data)
@@ -165,8 +172,10 @@ def test_bonus_not_worth_it():
         interest_rate=2.5,
         years=20,
         payroll_bonus=0.20,
-        insurance_bonus=0.30,
-        insurance_cost_monthly=200.0,  # Coste muy alto
+        life_insurance_bonus=0.15,
+        home_insurance_bonus=0.15,
+        life_insurance_cost_monthly=100.0,  # Coste muy alto
+        home_insurance_cost_monthly=100.0,
         other_costs_monthly=100.0,
     )
 
@@ -180,7 +189,12 @@ def test_bonus_not_worth_it():
 def test_zero_bonus_equals_no_bonus():
     """Test que bonificaciones de 0% dan el mismo resultado que sin bonificaciones."""
     data = MortgageData(
-        capital=100000.0, interest_rate=3.0, years=15, payroll_bonus=0.0, insurance_bonus=0.0
+        capital=100000.0,
+        interest_rate=3.0,
+        years=15,
+        payroll_bonus=0.0,
+        life_insurance_bonus=0.0,
+        home_insurance_bonus=0.0,
     )
 
     calculator = MortgageCalculator(data)
@@ -197,9 +211,11 @@ def test_high_bonus_reduces_rate_significantly():
         interest_rate=4.0,
         years=25,
         payroll_bonus=0.50,
-        insurance_bonus=1.00,
+        life_insurance_bonus=0.60,
+        home_insurance_bonus=0.40,
         card_bonus=0.20,
-        insurance_cost_monthly=50.0,
+        life_insurance_cost_monthly=25.0,
+        home_insurance_cost_monthly=25.0,
     )
 
     calculator = MortgageCalculator(data)

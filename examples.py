@@ -30,9 +30,11 @@ def ejemplo_con_bonificaciones():
         interest_rate=3.75,
         years=30,
         payroll_bonus=0.40,
-        insurance_bonus=0.60,
+        life_insurance_bonus=0.35,
+        home_insurance_bonus=0.25,
         card_bonus=0.15,
-        insurance_cost_monthly=35.0,
+        life_insurance_cost_monthly=20.0,
+        home_insurance_cost_monthly=15.0,
         card_annual_fee=30.0,
     )
 
@@ -54,8 +56,10 @@ def ejemplo_con_bonificaciones_caras():
         interest_rate=2.80,
         years=20,
         payroll_bonus=0.20,
-        insurance_bonus=0.30,
-        insurance_cost_monthly=120.0,  # Seguro muy caro
+        life_insurance_bonus=0.15,
+        home_insurance_bonus=0.15,
+        life_insurance_cost_monthly=70.0,  # Seguros muy caros
+        home_insurance_cost_monthly=50.0,
         other_costs_monthly=50.0,
     )
 
@@ -80,8 +84,10 @@ def generar_multiples_reportes():
                 interest_rate=3.50,
                 years=30,
                 payroll_bonus=0.25,
-                insurance_bonus=0.40,
-                insurance_cost_monthly=40.0,
+                life_insurance_bonus=0.20,
+                home_insurance_bonus=0.20,
+                life_insurance_cost_monthly=20.0,
+                home_insurance_cost_monthly=20.0,
             ),
         },
         {
@@ -91,10 +97,12 @@ def generar_multiples_reportes():
                 interest_rate=3.50,
                 years=30,
                 payroll_bonus=0.30,
-                insurance_bonus=0.60,
+                life_insurance_bonus=0.35,
+                home_insurance_bonus=0.25,
                 card_bonus=0.15,
                 other_bonus=0.10,
-                insurance_cost_monthly=45.0,
+                life_insurance_cost_monthly=25.0,
+                home_insurance_cost_monthly=20.0,
                 card_annual_fee=50.0,
                 other_costs_monthly=15.0,
             ),
@@ -125,8 +133,10 @@ def analizar_sensibilidad():
             interest_rate=rate,
             years=30,
             payroll_bonus=0.30,
-            insurance_bonus=0.50,
-            insurance_cost_monthly=45.0,
+            life_insurance_bonus=0.30,
+            home_insurance_bonus=0.20,
+            life_insurance_cost_monthly=25.0,
+            home_insurance_cost_monthly=20.0,
         )
 
         calculator = MortgageCalculator(data)

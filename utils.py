@@ -118,10 +118,12 @@ def sensitivity_analysis(
             interest_rate=rate,
             years=base_data.years,
             payroll_bonus=base_data.payroll_bonus,
-            insurance_bonus=base_data.insurance_bonus,
+            life_insurance_bonus=base_data.life_insurance_bonus,
+            home_insurance_bonus=base_data.home_insurance_bonus,
             card_bonus=base_data.card_bonus,
             other_bonus=base_data.other_bonus,
-            insurance_cost_monthly=base_data.insurance_cost_monthly,
+            life_insurance_cost_monthly=base_data.life_insurance_cost_monthly,
+            home_insurance_cost_monthly=base_data.home_insurance_cost_monthly,
             card_annual_fee=base_data.card_annual_fee,
             other_costs_monthly=base_data.other_costs_monthly,
         )
@@ -175,10 +177,12 @@ def calculate_break_even_cost(
             interest_rate=mortgage_data.interest_rate,
             years=mortgage_data.years,
             payroll_bonus=mortgage_data.payroll_bonus,
-            insurance_bonus=mortgage_data.insurance_bonus,
+            life_insurance_bonus=mortgage_data.life_insurance_bonus,
+            home_insurance_bonus=mortgage_data.home_insurance_bonus,
             card_bonus=mortgage_data.card_bonus,
             other_bonus=mortgage_data.other_bonus,
-            insurance_cost_monthly=cost,
+            life_insurance_cost_monthly=cost / 2,  # Divide cost between both insurances
+            home_insurance_cost_monthly=cost / 2,
             card_annual_fee=0.0,
             other_costs_monthly=0.0,
         )
@@ -251,11 +255,15 @@ def recommend_best_bonus_combination(
             payroll_bonus=(
                 total_bonus if "nomina" in combination or "payroll" in combination else 0.0
             ),
-            insurance_bonus=(
-                total_bonus if "seguros" in combination or "insurance" in combination else 0.0
+            life_insurance_bonus=(
+                total_bonus / 2 if "seguros" in combination or "insurance" in combination else 0.0
+            ),
+            home_insurance_bonus=(
+                total_bonus / 2 if "seguros" in combination or "insurance" in combination else 0.0
             ),
             card_bonus=total_bonus if "tarjeta" in combination or "card" in combination else 0.0,
-            insurance_cost_monthly=total_cost,
+            life_insurance_cost_monthly=total_cost / 2,
+            home_insurance_cost_monthly=total_cost / 2,
             card_annual_fee=0.0,
             other_costs_monthly=0.0,
         )
@@ -338,8 +346,10 @@ if __name__ == "__main__":
                 interest_rate=3.75,
                 years=30,
                 payroll_bonus=0.30,
-                insurance_bonus=0.50,
-                insurance_cost_monthly=45.0,
+                life_insurance_bonus=0.30,
+                home_insurance_bonus=0.20,
+                life_insurance_cost_monthly=25.0,
+                home_insurance_cost_monthly=20.0,
             ),
         },
         {
@@ -357,8 +367,10 @@ if __name__ == "__main__":
         interest_rate=3.50,
         years=30,
         payroll_bonus=0.30,
-        insurance_bonus=0.50,
-        insurance_cost_monthly=45.0,
+        life_insurance_bonus=0.30,
+        home_insurance_bonus=0.20,
+        life_insurance_cost_monthly=25.0,
+        home_insurance_cost_monthly=20.0,
     )
     sensitivity_file = sensitivity_analysis(base_data, rate_range=(2.5, 4.5), rate_step=0.25)
     print(f"✓ Análisis guardado en: {sensitivity_file}\n")
@@ -367,7 +379,12 @@ if __name__ == "__main__":
     print("3. Calculando coste máximo asumible...")
     break_even = calculate_break_even_cost(
         MortgageData(
-            capital=200000, interest_rate=3.50, years=30, payroll_bonus=0.30, insurance_bonus=0.50
+            capital=200000,
+            interest_rate=3.50,
+            years=30,
+            payroll_bonus=0.30,
+            life_insurance_bonus=0.30,
+            home_insurance_bonus=0.20,
         )
     )
     print(f"✓ Coste máximo mensual: {break_even['coste_maximo_mensual']:.2f} €")

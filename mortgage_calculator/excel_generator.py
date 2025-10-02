@@ -53,36 +53,40 @@ class ExcelGenerator:
         """Crea la hoja con los datos de entrada."""
         data = {
             "Concepto": [
-                "=== DATOS DE LA HIPOTECA ===",
+                "▼ DATOS DE LA HIPOTECA",
                 "Capital prestado (€)",
                 "Tasa de interés anual (%)",
                 "Plazo (años)",
                 "",
-                "=== BONIFICACIONES ===",
+                "▼ BONIFICACIONES",
                 "Bonificación por nómina (%)",
-                "Bonificación por seguros (%)",
+                "Bonificación por seguro de vida (%)",
+                "Bonificación por seguro de hogar (%)",
                 "Bonificación por tarjeta (%)",
                 "Otras bonificaciones (%)",
                 "",
-                "=== COSTES DE BONIFICACIONES ===",
-                "Coste mensual del seguro (€)",
+                "▼ COSTES DE BONIFICACIONES",
+                "Coste mensual seguro de vida (€)",
+                "Coste mensual seguro de hogar (€)",
                 "Cuota anual de la tarjeta (€)",
                 "Otros costes mensuales (€)",
             ],
             "Valor": [
                 "",
                 self.data.capital,
-                self.data.interest_rate,
+                f"{self.data.interest_rate}%",
                 self.data.years,
                 "",
                 "",
-                self.data.payroll_bonus,
-                self.data.insurance_bonus,
-                self.data.card_bonus,
-                self.data.other_bonus,
+                f"{self.data.payroll_bonus}%",
+                f"{self.data.life_insurance_bonus}%",
+                f"{self.data.home_insurance_bonus}%",
+                f"{self.data.card_bonus}%",
+                f"{self.data.other_bonus}%",
                 "",
                 "",
-                self.data.insurance_cost_monthly,
+                self.data.life_insurance_cost_monthly,
+                self.data.home_insurance_cost_monthly,
                 self.data.card_annual_fee,
                 self.data.other_costs_monthly,
             ],
@@ -98,19 +102,19 @@ class ExcelGenerator:
 
         data = {
             "Concepto": [
-                "=== RESUMEN EJECUTIVO ===",
+                "▼ RESUMEN EJECUTIVO",
                 "",
                 "¿Vale la pena la bonificación?",
                 "Ahorro real (€)",
                 "Porcentaje de ahorro (%)",
                 "",
-                "=== SIN BONIFICACIONES ===",
+                "▼ SIN BONIFICACIONES",
                 "Cuota mensual (€)",
                 "Intereses totales (€)",
                 "Total a pagar (€)",
                 "Tasa efectiva (%)",
                 "",
-                "=== CON BONIFICACIONES ===",
+                "▼ CON BONIFICACIONES",
                 "Cuota mensual (€)",
                 "Intereses totales (€)",
                 "Total a pagar (€)",
@@ -118,7 +122,7 @@ class ExcelGenerator:
                 "Coste real total (€)",
                 "Tasa efectiva (%)",
                 "",
-                "=== DIFERENCIAS ===",
+                "▼ DIFERENCIAS",
                 "Ahorro en cuota mensual (€)",
                 "Ahorro en intereses (€)",
                 "Ahorro nominal (€)",
@@ -130,13 +134,13 @@ class ExcelGenerator:
                 "",
                 "SÍ ✓" if self.results.is_worth_it else "NO ✗",
                 self.results.real_savings,
-                self.results.savings_percentage,
+                f"{self.results.savings_percentage}%",
                 "",
                 "",
                 self.results.monthly_payment_without_bonus,
                 self.results.total_interest_without_bonus,
                 self.results.total_paid_without_bonus,
-                self.results.effective_rate_without_bonus,
+                f"{self.results.effective_rate_without_bonus}%",
                 "",
                 "",
                 self.results.monthly_payment_with_bonus,
@@ -144,7 +148,7 @@ class ExcelGenerator:
                 self.results.total_paid_with_bonus,
                 self.results.total_bonus_costs,
                 self.results.total_paid_with_bonus + self.results.total_bonus_costs,
-                self.results.effective_rate_with_bonus,
+                f"{self.results.effective_rate_with_bonus}%",
                 "",
                 "",
                 self.results.monthly_payment_without_bonus
@@ -248,44 +252,51 @@ class ExcelGenerator:
             return
 
         months = self.data.years * 12
-        monthly_insurance = self.data.insurance_cost_monthly
         yearly_card = self.data.card_annual_fee
         monthly_other = self.data.other_costs_monthly
 
         data = {
             "Bonificación": [
                 "Domiciliación de nómina",
-                "Contratación de seguros",
+                "Seguro de vida",
+                "Seguro de hogar",
                 "Uso de tarjeta",
                 "Otras bonificaciones",
                 "",
                 "TOTAL BONIFICACIONES",
             ],
             "Reducción de Tipo (%)": [
-                self.data.payroll_bonus,
-                self.data.insurance_bonus,
-                self.data.card_bonus,
-                self.data.other_bonus,
+                f"{self.data.payroll_bonus}%",
+                f"{self.data.life_insurance_bonus}%",
+                f"{self.data.home_insurance_bonus}%",
+                f"{self.data.card_bonus}%",
+                f"{self.data.other_bonus}%",
                 "",
-                self.calculator.calculate_total_bonus(),
+                f"{self.calculator.calculate_total_bonus()}%",
             ],
             "Coste Mensual (€)": [
                 0,
-                monthly_insurance,
+                self.data.life_insurance_cost_monthly,
+                self.data.home_insurance_cost_monthly,
                 yearly_card / 12,
                 monthly_other,
                 "",
-                monthly_insurance + (yearly_card / 12) + monthly_other,
+                self.data.life_insurance_cost_monthly
+                + self.data.home_insurance_cost_monthly
+                + (yearly_card / 12)
+                + monthly_other,
             ],
             "Coste Total (€)": [
                 0,
-                monthly_insurance * months,
+                self.data.life_insurance_cost_monthly * months,
+                self.data.home_insurance_cost_monthly * months,
                 yearly_card * self.data.years,
                 monthly_other * months,
                 "",
                 self.results.total_bonus_costs,
             ],
             "Ahorro en Intereses (€)": [
+                "-",
                 "-",
                 "-",
                 "-",
@@ -343,9 +354,9 @@ class ExcelGenerator:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = border
 
-            # Formatear filas con secciones (===)
+            # Formatear filas con secciones (▼)
             for row in ws.iter_rows(min_row=2):
-                if row[0].value and str(row[0].value).startswith("==="):
+                if row[0].value and str(row[0].value).startswith("▼"):
                     row[0].fill = section_fill
                     row[0].font = section_font
 

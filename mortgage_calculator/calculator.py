@@ -76,7 +76,8 @@ class MortgageCalculator:
         """Calcula la bonificación total acumulada."""
         return (
             self.data.payroll_bonus
-            + self.data.insurance_bonus
+            + self.data.life_insurance_bonus
+            + self.data.home_insurance_bonus
             + self.data.card_bonus
             + self.data.other_bonus
         )
@@ -84,7 +85,11 @@ class MortgageCalculator:
     def calculate_total_bonus_costs(self) -> float:
         """Calcula el coste total de las bonificaciones durante la vida del préstamo."""
         months = self.data.years * 12
-        monthly_costs = self.data.insurance_cost_monthly + self.data.other_costs_monthly
+        monthly_costs = (
+            self.data.life_insurance_cost_monthly
+            + self.data.home_insurance_cost_monthly
+            + self.data.other_costs_monthly
+        )
         annual_costs = self.data.card_annual_fee
 
         return (monthly_costs * months) + (annual_costs * self.data.years)

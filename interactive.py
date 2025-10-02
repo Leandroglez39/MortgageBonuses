@@ -61,14 +61,16 @@ def main():
     # Bonificaciones
     print("--- BONIFICACIONES (reducción del tipo de interés en %) ---")
     payroll_bonus = obtener_float("Bonificación por domiciliar nómina (%)", 0.30)
-    insurance_bonus = obtener_float("Bonificación por contratar seguros (%)", 0.50)
+    life_insurance_bonus = obtener_float("Bonificación por seguro de vida (%)", 0.30)
+    home_insurance_bonus = obtener_float("Bonificación por seguro de hogar (%)", 0.20)
     card_bonus = obtener_float("Bonificación por usar tarjeta (%)", 0.10)
     other_bonus = obtener_float("Otras bonificaciones (%)", 0.10)
     print()
 
     # Costes
     print("--- COSTES DE LAS BONIFICACIONES ---")
-    insurance_cost = obtener_float("Coste mensual del seguro (€)", 45.0)
+    life_insurance_cost = obtener_float("Coste mensual seguro de vida (€)", 25.0)
+    home_insurance_cost = obtener_float("Coste mensual seguro de hogar (€)", 20.0)
     card_fee = obtener_float("Cuota anual de la tarjeta (€)", 50.0)
     other_costs = obtener_float("Otros costes mensuales (€)", 10.0)
     print()
@@ -83,10 +85,12 @@ def main():
         interest_rate=interest_rate,
         years=years,
         payroll_bonus=payroll_bonus,
-        insurance_bonus=insurance_bonus,
+        life_insurance_bonus=life_insurance_bonus,
+        home_insurance_bonus=home_insurance_bonus,
         card_bonus=card_bonus,
         other_bonus=other_bonus,
-        insurance_cost_monthly=insurance_cost,
+        life_insurance_cost_monthly=life_insurance_cost,
+        home_insurance_cost_monthly=home_insurance_cost,
         card_annual_fee=card_fee,
         other_costs_monthly=other_costs,
     )

@@ -17,18 +17,20 @@ def main():
     # Puedes modificar estos valores para tu caso particular
     mortgage_data = MortgageData(
         # Datos principales
-        capital=200000.0,  # 200,000€ prestados
-        interest_rate=3.50,  # 3.50% de interés anual
+        capital=180000.0,  # 200,000€ prestados
+        interest_rate=2.90,  # 3.50% de interés anual
         years=30,  # 30 años
         # Bonificaciones en el tipo de interés
-        payroll_bonus=0.30,  # 0.30% por domiciliar nómina
-        insurance_bonus=0.50,  # 0.50% por contratar seguros
-        card_bonus=0.10,  # 0.10% por usar tarjeta
-        other_bonus=0.10,  # 0.10% otras bonificaciones
+        payroll_bonus=0.40,  # 0.30% por domiciliar nómina
+        life_insurance_bonus=0.40,  # 0.30% por seguro de vida
+        home_insurance_bonus=0.10,  # 0.20% por seguro de hogar
+        card_bonus=0.00,  # 0.10% por usar tarjeta
+        other_bonus=0.00,  # 0.10% otras bonificaciones
         # Costes asociados a las bonificaciones
-        insurance_cost_monthly=45.0,  # 45€/mes el seguro
-        card_annual_fee=50.0,  # 50€/año la tarjeta
-        other_costs_monthly=10.0,  # 10€/mes otros costes
+        life_insurance_cost_monthly=288.0/12,  # X/12€/mes seguro de vida
+        home_insurance_cost_monthly=400.0/12,  # X/12€/mes seguro de hogar
+        card_annual_fee=0.0,  # 0€/año la tarjeta
+        other_costs_monthly=0.0,  # 0€/mes otros costes
     )
 
     print(f"Capital: {mortgage_data.capital:,.2f} €")
