@@ -1,4 +1,26 @@
-# Calculadora de Bonificaciones de Hipotecas
+# 📚 Documentación - MortgageBonuses
+
+Esta carpeta contiene toda la documentación del proyecto **Calculadora de Bonificaciones de Hipotecas**.
+
+## 📑 Índice de Documentación
+
+### 🚀 Para Empezar
+1. **[../README.md](../README.md)** - Inicio rápido y presentación del proyecto
+2. **[GUIA_USO.md](GUIA_USO.md)** - Guía completa de uso paso a paso
+3. **[RESUMEN_FINAL.md](RESUMEN_FINAL.md)** - Resumen ejecutivo de la actualización
+
+### 🔧 Técnica
+4. **[TECHNICAL.md](TECHNICAL.md)** - Documentación técnica detallada
+5. **[VERSIONS.md](VERSIONS.md)** - Información de versiones y dependencias
+6. **[PROYECTO_COMPLETO.md](PROYECTO_COMPLETO.md)** - Descripción completa del proyecto
+
+### 📖 Referencias
+7. **[COMANDOS.md](COMANDOS.md)** - Referencia rápida de comandos
+8. **[ACTUALIZACION.md](ACTUALIZACION.md)** - Detalles de la última actualización
+
+---
+
+## 📝 Resumen del Proyecto
 
 Este proyecto en Python te permite analizar si las bonificaciones de una hipoteca realmente valen la pena, generando un completo análisis en Excel.
 
