@@ -696,22 +696,71 @@ class ExcelGenerator:
             ws = wb["Análisis Individual Seguros"]
             input_sheet = "'Datos de Entrada'"
 
-            # Seguro de Vida
-            # Bonificación -> B9 (fila 9)
-            ws["B2"] = f"={input_sheet}!B9"
-            # Coste mensual -> B15 (fila 15)
-            ws["B3"] = f"={input_sheet}!B15"
-            # Coste total -> B15 * B5 (Plazo) * 12
-            ws["B4"] = f"={input_sheet}!B15*{input_sheet}!B5*12"
+            # ESTRUCTURA DE LA HOJA "Análisis Individual Seguros":
+            # Fila 1: Headers ["Concepto", "Valor"]
+            # Fila 2: "▼ SEGURO DE VIDA" (vacío)
+            # Fila 3: "Bonificación aplicada (%)" -> debe leer B9 (bonif vida)
+            # Fila 4: "Coste mensual actual (€)" -> debe leer B15 (coste vida)
+            # Fila 5: "Coste total durante hipoteca (€)" -> debe calcular B15*B5*12
+            # Fila 6: "Ahorro en intereses (€)" -> calculado por Python
+            # Fila 7: "Ahorro neto (€)" -> debe calcular B6-B5
+            # Fila 8: "¿Vale la pena?" -> debe calcular IF(B7>0, "SÍ ✓", "NO ✗")
+            # Fila 9: "" (vacío)
+            # Fila 10: "Análisis de rentabilidad:" (vacío)
+            # Fila 11: "Coste mensual máximo rentable (€)" -> calculado por Python
+            # Fila 12: "Coste anual máximo rentable (€)" -> calculado por Python
+            # Fila 13: "Coste total máximo rentable (€)" -> calculado por Python
+            # Fila 14: "" (vacío)
+            # Fila 15: "▼ SEGURO DE HOGAR" (vacío)
+            # Fila 16: "Bonificación aplicada (%)" -> debe leer B10 (bonif hogar)
+            # Fila 17: "Coste mensual actual (€)" -> debe leer B16 (coste hogar)
+            # Fila 18: "Coste total durante hipoteca (€)" -> debe calcular B16*B5*12
+            # Fila 19: "Ahorro en intereses (€)" -> calculado por Python
+            # Fila 20: "Ahorro neto (€)" -> debe calcular B19-B18
+            # Fila 21: "¿Vale la pena?" -> debe calcular IF(B20>0, "SÍ ✓", "NO ✗")
+
+            # ===== SEGURO DE VIDA =====
+            # B3: Bonificación vida -> B9 de Datos de Entrada
+            ws["B3"] = f"={input_sheet}!B9"
+            ws["B3"].number_format = "0.00%"
+
+            # B4: Coste mensual vida -> B15 de Datos de Entrada
+            ws["B4"] = f"={input_sheet}!B15"
             ws["B4"].number_format = "#,##0.00"
 
-            # Seguro de Hogar
-            # Bonificación -> B10 (fila 10)
-            ws["B15"] = f"={input_sheet}!B10"
-            # Coste mensual -> B16 (fila 16)
-            ws["B16"] = f"={input_sheet}!B16"
-            # Coste total -> B16 * B5 (Plazo) * 12
-            ws["B17"] = f"={input_sheet}!B16*{input_sheet}!B5*12"
+            # B5: Coste total vida -> B15 * B5 (años) * 12 meses
+            ws["B5"] = f"={input_sheet}!B15*{input_sheet}!B5*12"
+            ws["B5"].number_format = "#,##0.00"
+
+            # B7: Ahorro neto vida -> Ahorro intereses (B6) - Coste total (B5)
+            ws["B7"] = "=B6-B5"
+            ws["B7"].number_format = "#,##0.00"
+
+            # B8: ¿Vale la pena? -> IF ahorro neto > 0
+            ws["B8"] = '=IF(B7>0, "SÍ ✓", "NO ✗")'
+
+            # ===== SEGURO DE HOGAR =====
+            # B16: Bonificación hogar -> B10 de Datos de Entrada
+            ws["B16"] = f"={input_sheet}!B10"
+            ws["B16"].number_format = "0.00%"
+
+            # B17: Coste mensual hogar -> B16 de Datos de Entrada
+            ws["B17"] = f"={input_sheet}!B16"
             ws["B17"].number_format = "#,##0.00"
+
+            # B18: Coste total hogar -> B16 * B5 (años) * 12 meses
+            ws["B18"] = f"={input_sheet}!B16*{input_sheet}!B5*12"
+            ws["B18"].number_format = "#,##0.00"
+
+            # B20: Ahorro neto hogar -> Ahorro intereses (B19) - Coste total (B18)
+            ws["B20"] = "=B19-B18"
+            ws["B20"].number_format = "#,##0.00"
+
+            # B21: ¿Vale la pena? -> IF ahorro neto > 0
+            ws["B21"] = '=IF(B20>0, "SÍ ✓", "NO ✗")'
+
+            # B29: Diferencia de ahorro -> ABS(B7 - B20)
+            ws["B29"] = "=ABS(B7-B20)"
+            ws["B29"].number_format = "#,##0.00"
 
         wb.save(file_path)
